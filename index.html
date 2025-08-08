@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sun Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    :root{
+      --bg:#0b1020; --panel:#0f152a; --muted:#99a2b3; --text:#f2f5ff;
+      --brand:#ffd54d; --good:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+      --card:#0f1428; --border:#1f2a44;
+    }
+    *{box-sizing:border-box}
+    html, body { height:100% }
+    body { margin:0; background: radial-gradient(1200px 600px at 20% -10%, #1b2650 0%, #0b1020 60%); color:var(--text);
+      font-family:"Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    header{ position:sticky; top:0; z-index:10; background:linear-gradient(90deg, var(--brand), #ff9f4a); color:#101010; padding:10px 12px;
+      display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .logo{ display:flex; align-items:center; gap:8px; font-weight:800; }
+    .glyph{ width:22px; height:22px; border-radius:6px; background:#101010; display:grid; place-items:center }
+    .glyph svg{ width:14px; height:14px }
+    .layout{ display:grid; grid-template-columns: 1fr; grid-template-rows: 40vh auto }
+    #map{ width:100%; height:100% }
+    .panel{ background:var(--panel); border-top:1px solid var(--border); padding:10px 12px }
+    .controls{ display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end }
+    .controls label{ font-size:12px; color:var(--muted); display:flex; flex-direction:column; gap:4px }
+    .controls input{ padding:10px; border-radius:10px; border:1px solid var(--border); background:var(--card); color:var(--text); width:140px }
+    .cta{ padding:10px 14px; border-radius:10px; border:0; font-weight:800; cursor:pointer; background:#101010; color:#fff; display:flex; align-items:center; gap:8px }
+    .cta[disabled]{ opacity:.6; cursor:not-allowed }
+    .spinner{ width:16px; height:16px; background:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSczMicgaGVpZ2h0PSczMicgdmlld0JveD0nMCAwIDI0IDI0Jz4KICA8ZyBmaWxsPSdub25lJyBzdHJva2U9JyNmZmQ1NGQnIHN0cm9rZS13aWR0aD0nMicgc3Ryb2tlLWxpbmVjYXA9J3JvdW5kJz4KICAgIDxjaXJjbGUgY3g9JzEyJyBjeT0nMTInIHI9JzQnLz4KICAgIDxwYXRoIGQ9J00xMiAydjNNMTIgMTl2M00yIDEyaDNNMTkgMTJoM000LjIgNC4ybDIuMiAyLjJNMTcuNiAxNy42bDIuMiAyLjJNNC4yIDE5LjhsMi4yLTIuMk0xNy42IDYuNGwyLjItMi4yJy8+CiAgPC9nPgo8L3N2Zz4=') center/contain no-repeat; animation:spin 1s linear infinite; }
+    @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    .results .card{ background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; margin:12px 0 }
+    .hero{ width:100%; height:180px; object-fit:cover }
+    .card-body{ padding:12px }
+    .row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center }
+    .tag{ display:inline-block; border:1px solid #33416b; border-radius:999px; padding:2px 8px; font-size:12px; color:#c9d4ff }
+    .pill{ border:1px solid #33416b; border-radius:999px; padding:2px 8px; font-size:12px; color:#c9d4ff }
+    a.link{ color:#cde6ff; text-decoration:none; font-size:13px }
+    #status{ font-size:13px; color:var(--muted); margin:6px 0 2px }
+    .skeleton{ background:linear-gradient(90deg,#101735 0%,#18224a 50%,#101735 100%); background-size:200% 100%; animation:shimmer 1.2s infinite; }
+    @keyframes shimmer{ 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .sk-card{ height:260px; border-radius:16px; margin:12px 0 }
+    .footer{ padding:16px; font-size:12px; color:#9aa3b6; text-align:center }
+    @media(min-width:960px){ .layout{ grid-template-columns:420px 1fr; grid-template-rows: calc(100vh - 48px) } #map{ height: calc(100vh - 48px) } .panel{ border-left:1px solid var(--border); border-top:none; overflow:auto } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <div class="glyph">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="5.5" stroke="#ffd54d" stroke-width="2"/>
+          <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.2 4.2l2.2 2.2M17.6 17.6l2.2 2.2M4.2 19.8l2.2-2.2M17.6 6.4l2.2-2.2"
+                stroke="#ffd54d" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      Sun Finder
+    </div>
+    <button id="help" class="cta" style="background:transparent;color:#101010;border:1px solid #101010">How it works</button>
+  </header>
+
+  <section class="layout">
+    <div id="map"></div>
+    <aside class="panel">
+      <div class="controls">
+        <label>Search radius (miles)
+          <input type="number" id="radiusMi" value="50" min="5" max="200" step="5">
+        </label>
+        <label>Max results
+          <input type="number" id="limit" value="8" min="5" max="12" step="1">
+        </label>
+        <button id="go" class="cta"><span id="spin" class="spinner" style="display:none"></span><span id="btnText">Find Sun</span></button>
+      </div>
+      <div id="status">Ready.</div>
+      <div class="results" id="results"></div>
+      <div class="footer">
+        <a href="#" style="color:#cde6ff">Privacy</a> · <a href="#" style="color:#cde6ff">Contact</a>
+      </div>
+    </aside>
+  </section>
+
+  <div class="dlg" id="howto" style="position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center">
+    <div style="background:#0d142a;border:1px solid var(--border);border-radius:16px;padding:16px;width:min(520px,92vw)">
+      <h3 style="margin:0 0 8px 0">How it works</h3>
+      <p style="color:#9aa3b6;font-size:14px;margin-top:0">Allow location → we scan nearby weather → we name nearby towns using Wikipedia → tap a spot to open it in Maps.</p>
+      <div style="display:flex;justify-content:flex-end;gap:8px"><button id="closeHow" class="cta" style="background:#ffd54d;color:#101010">Close</button></div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    window.SF_SPIN = true;
+  </script>
+  <script src="script.js"></script>
+</body>
+</html>
