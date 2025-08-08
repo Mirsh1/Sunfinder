@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sun Finder</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    :root{ --bg:#0b1020; --panel:#0f152a; --card:#0f1428; --border:#1f2a44; --text:#f2f5ff; --muted:#9aa3b6; --brand:#ffd54d; }
+    *{ box-sizing:border-box } body{ margin:0; background:radial-gradient(1200px 600px at 20% -10%, #1b2650, #0b1020 60%); color:var(--text);
+      font-family:'Lato',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
+    header{ position:sticky; top:0; z-index:30; background:linear-gradient(90deg,var(--brand),#ff9f4a); color:#101010;
+      padding:10px 12px; display:flex; align-items:center; justify-content:space-between; }
+    .layout{ display:grid; grid-template-columns:1fr; grid-template-rows:42vh auto; }
+    #map{ width:100%; height:100%; position:relative; z-index:1; }
+    .panel{ background:var(--panel); border-top:1px solid var(--border); padding:12px; }
+    .controls{ display:flex; gap:10px; flex-wrap:wrap; align-items:end; }
+    .controls label{ font-size:12px; color:var(--muted); display:flex; flex-direction:column; gap:4px; }
+    .controls input,.controls select{ width:140px; padding:10px; border-radius:10px; border:1px solid var(--border); background:#0f1428; color:var(--text); }
+    .cta{ padding:10px 14px; border-radius:10px; border:0; background:var(--brand); color:#101010; font-weight:800; cursor:pointer; }
+    .cta[disabled]{ opacity:.6 }
+    .cta[data-loading]::after{ content:""; width:14px; height:14px; border-radius:50%; border:2px solid #101010; border-top-color:transparent;
+      display:inline-block; margin-left:8px; vertical-align:middle; animation:spin .8s linear infinite; }
+    @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+    #status{ font-size:13px; color:var(--muted); margin:6px 0 4px; }
+    .results{ display:block; }
+    .card{ background:var(--card); border:1px solid var(--border); border-radius:16px; margin:12px 0; padding:12px; }
+    .card h3{ margin:0 0 6px 0; font-size:16px }
+    .row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .pill{ border:1px solid #33416b; border-radius:999px; padding:2px 8px; font-size:12px; color:#c9d4ff; }
+    .skeleton{ background:linear-gradient(90deg,#132040,#1a274b,#132040); background-size:200% 100%; animation:sh 1.3s infinite; height:80px; border-radius:12px; margin:12px 0; }
+    @keyframes sh{0%{background-position:0%}100%{background-position:100%}}
+    @media(min-width:1200px){ .layout{ grid-template-columns:420px 1fr; grid-template-rows:calc(100vh - 52px) }
+      #map{ height:calc(100vh - 52px) } .panel{ border-left:1px solid var(--border); border-top:none; overflow:auto }
+      .results{ display:grid; grid-template-columns:1fr 1fr; gap:12px } .card{ margin:0 } }
+    .ob{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.6); z-index:9999 }
+    .ob.active{ display:flex } .box{ width:min(520px,92vw); background:#0d142a; border:1px solid var(--border); border-radius:16px; padding:16px }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">☀️ Sun Finder</div>
+    <button id="help" class="cta" style="background:transparent;border:1px solid #101010">How it works</button>
+  </header>
+  <section class="layout">
+    <div id="map"></div>
+    <aside class="panel">
+      <div class="controls">
+        <label>Interest
+          <select id="interest">
+            <option value="any">Any</option>
+            <option value="beach">Beach</option>
+            <option value="theme_park">Theme Park</option>
+            <option value="nature_reserve">Nature Reserve</option>
+            <option value="lake">Lake</option>
+            <option value="historic">Historic Site</option>
+            <option value="scenic">Scenic View</option>
+            <option value="park">Park / Playground</option>
+            <option value="zoo">Aquarium / Zoo</option>
+          </select>
+        </label>
+        <label>Radius (miles)<input type="number" id="radiusMi" value="50" min="10" max="120" step="10"></label>
+        <label>Max results<input type="number" id="limit" value="8" min="5" max="12" step="1"></label>
+        <button id="go" class="cta">Find Sun</button>
+        <label style="font-size:12px;color:#9aa3b6"><input type="checkbox" id="debugToggle"> Debug</label>
+      </div>
+      <div id="status">Ready.</div>
+      <div id="skeletons"></div>
+      <div id="results" class="results"></div>
+    </aside>
+  </section>
+
+  <div class="ob" id="onboard">
+    <div class="box">
+      <h3>How it works</h3>
+      <p>Pick what you're in the mood for (e.g., Beach), set radius, then hit Find Sun. We fetch only those places and rank by sunshine.</p>
+      <button id="closeOb" class="cta">Close</button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="script.js" defer></script>
+</body>
+</html>
