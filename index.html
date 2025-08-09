@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Google AdSense verification -->
-  <meta name="google-adsense-account" content="ca-pub-2364892300509505">
+  <!-- AdSense verification -->
+  <meta name="google-adsense-account" content="ca-pub-2364892300509505" />
 
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-P8LS80EHNZ"></script>
@@ -17,48 +17,63 @@
   </script>
 
   <title>Sun Finder</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <h1>Sun Finder</h1>
-    <button id="howItWorksBtn">How it works</button>
+  <header class="topbar">
+    <div class="brand">☀️ Sun Finder</div>
+    <button id="howItWorksBtn" class="ghost">How it works</button>
   </header>
 
-  <!-- Ad placeholder above filters -->
-  <div class="ad-slot" id="ad-top">
-    <!-- AdSense ad code goes here when approved -->
-    <p>Ad slot (top)</p>
-  </div>
+  <!-- small ad area above filters -->
+  <div class="ad ad-top" id="ad-top"><span>Ad slot (top)</span></div>
 
-  <section id="filters">
-    <label for="radius">Radius (miles):</label>
-    <input type="number" id="radius" min="1" max="100" value="50">
+  <section class="wrap">
+    <div class="controls">
+      <label>Radius (miles)
+        <input type="number" id="radius" min="10" max="120" step="10" value="50" />
+      </label>
 
-    <label for="interest">Interest:</label>
-    <select id="interest">
-      <option value="">Any</option>
-      <option value="beach">Beach</option>
-      <option value="nature">Nature Reserve</option>
-      <option value="lake">Lake</option>
-      <option value="themepark">Theme Park</option>
-    </select>
+      <label>Interest
+        <select id="interest">
+          <option value="">Any</option>
+          <option value="beach">Beach</option>
+          <option value="nature">Nature Reserve</option>
+          <option value="lake">Lake</option>
+          <option value="themepark">Theme Park</option>
+          <option value="historic">Historic</option>
+          <option value="scenic">Scenic View</option>
+          <option value="park">Park / Playground</option>
+          <option value="zoo">Aquarium / Zoo</option>
+        </select>
+      </label>
 
-    <button id="findSunBtn">Find the Sun</button>
+      <button id="findSunBtn" class="cta">
+        <span>Find the Sun</span>
+        <span class="spinner" aria-hidden="true"></span>
+      </button>
+    </div>
+
+    <div id="status" class="status">Ready.</div>
+    <div id="results" class="results"></div>
   </section>
 
-  <main id="results"></main>
-
-  <!-- Modal for "How it works" -->
-  <div id="howItWorksModal" class="modal">
-    <div class="modal-content">
-      <span class="close">&times;</span>
+  <!-- How it works modal -->
+  <div id="howItWorksModal" class="modal" aria-hidden="true">
+    <div class="sheet">
+      <button class="close" aria-label="Close">×</button>
       <h2>How it works</h2>
-      <p>We use your location, real-time weather, and points of interest to find the sunniest nearby spots.</p>
+      <ol>
+        <li>We get your location (HTTPS required).</li>
+        <li>We check nearby weather in real time.</li>
+        <li>Pick an interest to prioritise matching places.</li>
+        <li>Tap a result to open it in Maps.</li>
+      </ol>
     </div>
   </div>
 
   <script src="script.js"></script>
 </body>
 </html>
+
 
