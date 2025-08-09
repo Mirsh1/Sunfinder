@@ -26,8 +26,8 @@ body{margin:0;background:radial-gradient(1200px 600px at 20% -10%, #1b2650, #0b1
 .ad{background:#0f152a;border:1px dashed #33416b;border-radius:12px;color:#9aa3b6;display:flex;align-items:center;justify-content:center;height:54px;margin:12px 0}
 .modal{position:fixed;inset:0;display:none;background:rgba(0,0,0,.6);z-index:9999}
 .modal.show{display:flex;align-items:center;justify-content:center}
-.sheet{background:#0d142a;border:1px solid var(--border);border-radius:16px;padding:16px;max-width:520px;width:92vw}
-.close{position:absolute;margin-left:-8px;margin-top:-8px;background:transparent;border:1px solid #33416b;color:#fff;border-radius:10px;padding:6px 10px;cursor:pointer}
+.sheet{background:#0d142a;border:1px solid var(--border);border-radius:16px;padding:16px;max-width:520px;width:92vw;position:relative}
+.close{position:absolute;top:10px;right:10px;background:transparent;border:1px solid #33416b;color:#fff;border-radius:10px;padding:6px 10px;cursor:pointer}
 .skeleton{background:linear-gradient(90deg,#132040,#1a274b,#132040);background-size:200% 100%;animation:sh 1.2s infinite;height:88px;border-radius:12px}
 @keyframes sh{0%{background-position:0%}100%{background-position:100%}}
 @media(min-width:1100px){ .results{grid-template-columns:1fr 1fr} }
