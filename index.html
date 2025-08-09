@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- AdSense verification -->
-  <meta name="google-adsense-account" content="ca-pub-2364892300509505" />
+  <!-- Google AdSense verification -->
+  <meta name="google-adsense-account" content="ca-pub-2364892300509505">
 
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-P8LS80EHNZ"></script>
@@ -17,6 +17,7 @@
   </script>
 
   <title>Sun Finder</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -25,52 +26,59 @@
     <button id="howBtn" class="ghost">How it works</button>
   </header>
 
-  <!-- small ad above filters -->
-  <div class="ad ad-top" id="ad-top"><span>Ad slot (top)</span></div>
+  <main class="grid">
+    <div id="map"></div>
 
-  <main class="wrap">
-    <section class="controls">
-      <label>Radius (miles)
-        <input type="number" id="radiusMi" min="10" max="120" step="10" value="50" />
-      </label>
-      <label>Interest
-        <select id="interest">
-          <option value="">Any</option>
-          <option value="beach">Beach</option>
-          <option value="nature">Nature Reserve</option>
-          <option value="lake">Lake</option>
-          <option value="themepark">Theme Park</option>
-          <option value="historic">Historic</option>
-          <option value="scenic">Scenic View</option>
-          <option value="park">Park / Playground</option>
-          <option value="zoo">Aquarium / Zoo</option>
-        </select>
-      </label>
-      <button id="go" class="cta">
-        <span>Find the Sun</span>
-        <span class="spinner" aria-hidden="true"></span>
-      </button>
-    </section>
+    <aside class="panel">
+      <div class="ad ad-top" id="ad-top"><span>Ad slot (top)</span></div>
 
-    <div id="status" class="status">Ready.</div>
-    <section id="results" class="results"></section>
+      <div class="controls">
+        <label>Interest
+          <select id="interest">
+            <option value="any">Any</option>
+            <option value="beach">Beach</option>
+            <option value="nature_reserve">Nature Reserve</option>
+            <option value="lake">Lake</option>
+            <option value="theme_park">Theme Park</option>
+            <option value="historic">Historic</option>
+            <option value="scenic">Scenic View</option>
+            <option value="park">Park / Playground</option>
+            <option value="zoo">Aquarium / Zoo</option>
+          </select>
+        </label>
+        <label>Radius (miles)
+          <input id="radiusMi" type="number" min="10" max="120" step="10" value="50" />
+        </label>
+        <label>Max results
+          <input id="limit" type="number" min="6" max="12" step="1" value="8" />
+        </label>
+        <button id="go" class="cta">
+          <span>Find the Sun</span>
+          <span class="spinner" aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <div id="status" class="status">Ready.</div>
+      <div id="skeletons"></div>
+      <div id="results" class="results"></div>
+    </aside>
   </main>
 
-  <!-- inline ad inserted after 3rd card by JS -->
-
+  <!-- How it works modal -->
   <div id="how" class="modal" aria-hidden="true">
     <div class="sheet">
       <button class="close" aria-label="Close">×</button>
       <h2>How it works</h2>
       <ol>
-        <li>Allow location (site must be HTTPS).</li>
-        <li>We sample nearby spots and fetch live weather.</li>
-        <li>Pick an interest to bias activities.</li>
-        <li>Tap a result to open it in Maps.</li>
+        <li>Click <b>Find the Sun</b> (HTTPS is required for location).</li>
+        <li>We check the weather around you and score the sunniest nearby towns/cities.</li>
+        <li>Pick an interest (e.g., Beach) to prioritise matching places.</li>
+        <li>Tap a result to open it in Apple/Google Maps.</li>
       </ol>
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="script.js" defer></script>
 </body>
 </html>
