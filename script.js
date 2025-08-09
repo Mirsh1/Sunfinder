@@ -1,32 +1,29 @@
-// Sun Finder v5.5 — Wikidata interest search, sunshine duration, Top 3, SEO, no inline ads
+// Sun Finder v5.5.1 — solid labels (no undefined), strict settlements, sunshine duration, Top 3, SEO, no inline ads
 let map, spotsLayer, userMarker;
 const resultsEl = document.getElementById('results');
 const statusEl = document.getElementById('status');
 const top3El = document.getElementById('top3');
-
 const btn = document.getElementById('go');
 const ob = document.getElementById('onboard');
 document.getElementById('help').addEventListener('click',()=> ob.classList.add('show'));
 document.getElementById('closeOb').addEventListener('click',()=> ob.classList.remove('show'));
 window.addEventListener('keydown',(e)=>{ if(e.key==='Escape') ob.classList.remove('show'); });
 
-const MI_TO_KM = 1.609344, KM_TO_MI = 0.621371;
-function fmt(n){ return Math.round(n); }
-function toRad(d){ return d*Math.PI/180; } function toDeg(r){ return r*180/Math.PI; }
-
 function initMap(){
   map = L.map('map', { zoomControl:true });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'&copy; OpenStreetMap' }).addTo(map);
   spotsLayer = L.layerGroup().addTo(map);
-  map.setView([55.9533, -3.1883], 9); // default Edinburgh
+  map.setView([55.9533, -3.1883], 9);
 }
 window.addEventListener('load', initMap);
 
+const MI_TO_KM = 1.609344, KM_TO_MI = 0.621371;
+function fmt(n){ return Math.round(n); }
+function toRad(d){ return d*Math.PI/180; } function toDeg(r){ return r*180/Math.PI; }
 function havKm(a,b){ const R=6371.0088; const dLat=toRad(b.lat-a.lat), dLon=toRad(b.lon-a.lon);
   const lat1=toRad(a.lat), lat2=toRad(b.lat);
   const h=Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;
-  return 2*R*Math.asin(Math.sqrt(h));
-}
+  return 2*R*Math.asin(Math.sqrt(h)); }
 function bearingDeg(a,b){ const lat1=toRad(a.lat), lat2=toRad(b.lat), dLon=toRad(b.lon-a.lon);
   const y=Math.sin(dLon)*Math.cos(lat2); const x=Math.cos(lat1)*Math.sin(lat2)-Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
   return (toDeg(Math.atan2(y,x))+360)%360; }
@@ -58,7 +55,6 @@ async function fetchNowAndHourly(lat, lon, signal){
   };
   return { current: data.current, next };
 }
-
 function isSunnyLike(cc, sw, pr){ return (cc<=40)&&(pr<0.2)&&(sw>=80); }
 function sunshineWindow(next){
   let minutes=0, until=null;
@@ -69,75 +65,88 @@ function sunshineWindow(next){
   return { minutes, until };
 }
 
-// ===== Wikidata: category → POIs within radius =====
-const WD = {
-  beach: "Q40080",
-  nature_reserve: "Q473972",
-  lake: "Q23397",
-  theme_park: "Q134342",
-  historic: "Q23413", // castle (as a proxy)
-  scenic_view: "Q207694", // viewpoint
-  park: "Q22698", // park
-  zoo: "Q43501" // zoo
-};
-
-async function fetchWikidataPOIs(origin, radiusKm, category){
-  const qid = WD[category]; if(!qid) return [];
-  const center = `Point(${origin.lon} ${origin.lat})`;
-  const query = `
-    SELECT ?item ?itemLabel ?coord WHERE {
-      SERVICE wikibase:around {
-        ?item wdt:P625 ?coord .
-        bd:serviceParam wikibase:center "${center}"^^geo:wktLiteral ;
-                         wikibase:radius "${radiusKm.toFixed(1)}" .
-      }
-      ?item wdt:P31 wd:${qid} .
-      SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
-    } LIMIT 80
-  `;
+// ===== Overpass interest → POIs (robust + timeout + fallback) =====
+function overpassFilter(interest){
+  switch(interest){
+    case "beach": return '(nwr["natural"="beach"];);';
+    case "theme_park": return '(nwr["leisure"="theme_park"];);';
+    case "nature_reserve": return '(nwr["leisure"="nature_reserve"];nwr["boundary"="protected_area"];);';
+    case "lake": return '(nwr["natural"="water"]["water"~"lake|reservoir"];);';
+    case "historic": return '(nwr["historic"];nwr["heritage"];);';
+    case "scenic_view": return '(nwr["tourism"="viewpoint"];);';
+    case "park": return '(nwr["leisure"~"park|playground"];);';
+    case "zoo": return '(nwr["amenity"="aquarium"];nwr["tourism"="zoo"];);';
+    default: return '';
+  }
+}
+function bboxFrom(origin, radiusMi){
+  const latDelta = (radiusMi*MI_TO_KM)/111.0;
+  const lonDelta = latDelta/Math.cos(origin.lat*Math.PI/180);
+  const s = (n)=> n.toFixed(5);
+  return [s(origin.lat-latDelta), s(origin.lon-lonDelta), s(origin.lat+latDelta), s(origin.lon+lonDelta)];
+}
+async function fetchPOIsOverpass(origin, radiusMi, interest){
+  const flt = overpassFilter(interest);
+  if(!flt) return [];
+  const [s,w,n,e] = bboxFrom(origin, radiusMi);
+  const q = "[out:json][timeout:12];(" + flt + ")(" + s + "," + w + "," + n + "," + e + ");out center;";
+  const ctrl = new AbortController();
+  const to = setTimeout(()=> ctrl.abort("timeout"), 6000);
   try{
-    const r = await fetch("https://query.wikidata.org/sparql?format=json", {
+    const r = await fetch("https://overpass-api.de/api/interpreter", {
       method:"POST",
-      headers: { "Content-Type":"application/sparql-query", "Accept":"application/sparql-results+json" },
-      body: query
+      headers:{ "Content-Type":"application/x-www-form-urlencoded" },
+      body: "data=" + encodeURIComponent(q),
+      signal: ctrl.signal
     });
-    if(!r.ok) throw new Error("wikidata "+r.status);
+    if(!r.ok) throw new Error("overpass "+r.status);
     const d = await r.json();
-    const out = [];
-    (d.results.bindings||[]).forEach(row=>{
-      const wkt = row.coord.value; // 'Point(lon lat)'
-      const m = /Point\(([-\d.]+) ([-\d.]+)\)/.exec(wkt);
-      if(!m) return;
-      const lon = parseFloat(m[1]), lat = parseFloat(m[2]);
-      out.push({ lat, lon, title: row.itemLabel?.value || "Place" });
+    const out=[];
+    (d.elements||[]).forEach(e=>{
+      const lat = e.lat || e.center?.lat;
+      const lon = e.lon || e.center?.lon;
+      if(lat && lon) out.push({ lat, lon, name: e.tags?.name || null });
     });
     return out;
   }catch(e){
-    console.warn("Wikidata failed:", e.message||e);
+    console.warn("Overpass failed:", e && e.message ? e.message : e);
     return [];
+  }finally{
+    clearTimeout(to);
   }
 }
 
-// ===== Nominatim: nearest settlement name =====
+// ===== Settlement naming (multi-zoom, strict) =====
 const nameCache = new Map();
+const WATER_RE = /(sea|ocean|bay|firth|channel|loch|estuary|gulf|sound|lake)/i;
+const BAD_RE = /(school|station|memorial|incident|murder|academy|college|campus)/i;
+async function tryNominatim(lat, lon, zoom){
+  const u = new URL("https://nominatim.openstreetmap.org/reverse");
+  u.searchParams.set("lat", lat); u.searchParams.set("lon", lon);
+  u.searchParams.set("format","jsonv2"); u.searchParams.set("zoom", String(zoom)); u.searchParams.set("addressdetails","1");
+  const r = await fetch(u, { headers:{ "Accept":"application/json" } });
+  if(!r.ok) return null;
+  const d = await r.json(); return d.address || null;
+}
 async function settlementName(lat, lon){
   const key = `${lat.toFixed(3)},${lon.toFixed(3)}`;
   if(nameCache.has(key)) return nameCache.get(key);
-  const u = new URL("https://nominatim.openstreetmap.org/reverse");
-  u.searchParams.set("lat", lat); u.searchParams.set("lon", lon);
-  u.searchParams.set("format","jsonv2"); u.searchParams.set("zoom","14"); u.searchParams.set("addressdetails","1");
-  const r = await fetch(u, { headers:{ "Accept":"application/json" } });
-  if(!r.ok){ nameCache.set(key,null); return null; }
-  const d = await r.json();
-  const ad = d.address || {};
-  const place = ad.city || ad.town || ad.village || ad.hamlet || ad.suburb || ad.neighbourhood || null;
-  const bad = /(school|station|memorial|incident|murder|academy|college|campus)/i.test(place||"");
-  const label = bad ? null : place;
+  // zoom sequence: 14 -> 12 -> 10 -> 8 (wider admin levels)
+  const zlist = [14,12,10,8];
+  let label=null;
+  for(const z of zlist){
+    const ad = await tryNominatim(lat, lon, z); if(!ad) continue;
+    const place = ad.city || ad.town || ad.village || ad.hamlet || ad.suburb || ad.neighbourhood || ad.county || ad.state || null;
+    if(!place) continue;
+    if (BAD_RE.test(place)) continue;
+    if (WATER_RE.test(place)) continue;
+    label = place; break;
+  }
   nameCache.set(key, label);
   return label;
 }
 
-// ===== Fallback grid =====
+// ===== Grid fallback =====
 function makeGrid(origin, radiusMi){
   const radiusKm = radiusMi*MI_TO_KM;
   const rings=[]; const stepKm=Math.max(12, Math.min(16, radiusKm/3));
@@ -192,17 +201,15 @@ async function getSunSpots(origin, radiusMi, limit, interest, signal){
   let candidates=[];
   if(interest!=="any"){
     statusEl.textContent = `Looking up ${interest.replace('_',' ')}s…`;
-    const pois = await fetchWikidataPOIs(origin, radiusMi*MI_TO_KM, interest);
-    // Map to settlements and keep within 3 miles of the POI
+    const pois = await fetchPOIsOverpass(origin, radiusMi, interest);
     for(const p of pois){
       const place = await settlementName(p.lat, p.lon);
-      if(!place) continue;
-      const distToTownMi = havKm({lat:p.lat,lon:p.lon},{lat:origin.lat,lon:origin.lon})*KM_TO_MI; // just for sort near user
-      candidates.push({ lat:p.lat, lon:p.lon, place, poiTitle:p.title, distToTownMi });
+      if(!place) continue; // strict: only keep if we can name a settlement
+      candidates.push({ lat:p.lat, lon:p.lon, place });
       if(candidates.length > 60) break;
     }
     if(!candidates.length){
-      statusEl.textContent = `No POIs found — scanning general area…`;
+      statusEl.textContent = `No matching POIs — scanning general area…`;
       candidates = makeGrid(origin, radiusMi);
     }
   }else{
@@ -226,12 +233,21 @@ async function getSunSpots(origin, radiusMi, limit, interest, signal){
     const got = await Promise.all(pr);
     got.filter(x=>x.ok).forEach(x=> results.push(x.r));
     if(results.length>=limit*3) break;
-    await new Promise(r=> setTimeout(r, 150));
+    await new Promise(r=> setTimeout(r, 120));
   }
 
   // Sort by longest sunshine, then closest
   results.sort((a,b)=> (b.sunnyMinutes - a.sunnyMinutes) || (a.distMi - b.distMi));
-  return results.slice(0, Math.max(limit, 10));
+
+  // Deduplicate by place label
+  const seen = new Set(); const out=[];
+  for(const r of results){
+    const key = (r.place||"").toLowerCase().trim();
+    if(!key) continue; // extra safety
+    if(seen.has(key)) continue; seen.add(key); out.push(r);
+    if(out.length>=limit) break;
+  }
+  return out;
 }
 
 // ===== Render =====
@@ -246,7 +262,7 @@ function render(list, origin, interest){
     const mins=r.sunnyMinutes, until=r.sunnyUntil? new Date(r.sunnyUntil).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '—';
     const card = document.createElement('div');
     card.className='topCard';
-    card.innerHTML = `<h4>${idx+1}. ${r.place}</h4>
+    card.innerHTML = `<h4>${idx+1}. ${escapeHtml(r.place)}</h4>
       <div class="row">
         <span class="pill ${r.isSunny?'ok':'warn'}">${r.isSunny?'Sunny now':'Sun may vary'}</span>
         <span class="pill">Sunny for ${Math.floor(mins/60)}h ${mins%60? (mins%60+'m'):''} ${until!=='—'?`(until ${until})`:''}</span>
@@ -260,7 +276,8 @@ function render(list, origin, interest){
     const mins=r.sunnyMinutes, until=r.sunnyUntil? new Date(r.sunnyUntil).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '—';
     const card = document.createElement('div'); card.className='card';
     const catBadge = interest!=='any' ? `<span class="pill ok">✓ ${interest.replace('_',' ')}</span>` : '';
-    card.innerHTML = `<h3>${idx+1}. ${r.place}</h3>
+    const title = r.place ? escapeHtml(r.place) : 'Nearby area';
+    card.innerHTML = `<h3>${idx+1}. ${title}</h3>
       <div class="row">
         ${catBadge}
         <span class="pill ${r.isSunny?'ok':'warn'}">${r.isSunny?'Sunny now':'Sun may vary'}</span>
@@ -272,25 +289,25 @@ function render(list, origin, interest){
     resultsEl.appendChild(card);
 
     const m=L.circleMarker([r.lat,r.lon],{radius:7,weight:2,color:r.isSunny?'#22c55e':'#f59e0b'})
-      .bindPopup(`<b>${idx+1}. ${r.place}</b><br>Sunny for ${Math.floor(mins/60)}h ${mins%60? (mins%60+'m'):''}${until!=='—'?` (until ${until})`:''}`)
+      .bindPopup(`<b>${idx+1}. ${title}</b><br>Sunny for ${Math.floor(mins/60)}h ${mins%60? (mins%60+'m'):''}${until!=='—'?` (until ${until})`:''}`)
       .addTo(spotsLayer);
     group.push(m);
   });
   if(list.length){ const b=L.featureGroup(group).getBounds().pad(0.2); map.fitBounds(b); }
 }
 
-// ===== SEO updates (dynamic) =====
+function escapeHtml(str){ return String(str).replace(/[&<>"']/g, s=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[s])); }
+
+// ===== SEO updates =====
 function updateSEO(list, origin, interest){
-  const interestLabel = interest==='any' ? 'Sunniness' : interest.replace('_',' ');
-  document.title = `Find the sunniest ${interestLabel.toLowerCase()} near you — Sun Finder`;
+  const interestLabel = interest==='any' ? 'places' : interest.replace('_',' ');
+  document.title = `Sunniest ${interestLabel} near you — Sun Finder`;
   const desc = list.length ?
-    `Top spots right now: ${list.slice(0,3).map(x=>x.place).join(', ')}. See sunshine duration and temperature.` :
+    `Top spots: ${list.slice(0,3).map(x=>x.place).filter(Boolean).join(', ')}. See sunshine duration and temperature.` :
     `Find the sunniest places near you right now. See sunshine duration and temperature.`;
   let meta = document.querySelector('meta[name="description"]');
   if(!meta){ meta = document.createElement('meta'); meta.setAttribute('name','description'); document.head.appendChild(meta); }
   meta.setAttribute('content', desc);
-
-  // JSON-LD ItemList of results
   const schema = {
     "@context":"https://schema.org",
     "@type":"ItemList",
@@ -299,7 +316,7 @@ function updateSEO(list, origin, interest){
       "position": i+1,
       "item": {
         "@type":"Place",
-        "name": r.place,
+        "name": r.place || "Nearby area",
         "geo": { "@type":"GeoCoordinates", "latitude": r.lat, "longitude": r.lon },
         "additionalProperty":[
           {"@type":"PropertyValue","name":"temperature_2m","value":r.current.temperature_2m},

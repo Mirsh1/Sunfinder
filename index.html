@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sun Finder — Find the sunniest places near you</title>
 
-  <!-- AdSense verification (auto ads managed by Google) -->
+  <!-- AdSense verification (auto ads) -->
   <meta name="google-adsense-account" content="ca-pub-2364892300509505">
 
   <!-- Google Analytics -->
@@ -76,13 +76,13 @@
       <ol>
         <li>Allow location (HTTPS required). We never store it.</li>
         <li>Pick an interest like <b>Beach</b> or <b>Nature Reserve</b> (optional).</li>
-        <li>We find verified places via Wikidata & OSM, then fetch real-time weather.</li>
+        <li>We find real places via OSM/Wikidata, then fetch real-time weather.</li>
         <li>Results show <b>how long it’ll stay sunny</b> and rank by longest sunshine first.</li>
       </ol>
     </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="script.js"></script>
+  <script src="script.js" defer></script>
 </body>
 </html>
