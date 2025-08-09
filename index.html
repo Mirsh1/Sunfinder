@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sun Finder — Find the sunniest places near you</title>
 
-  <!-- AdSense verification (auto ads) -->
+  <link rel="icon" href="favicon.ico">
+
+  <!-- AdSense verification -->
   <meta name="google-adsense-account" content="ca-pub-2364892300509505">
 
   <!-- Google Analytics -->
@@ -16,12 +18,6 @@
     gtag('js', new Date());
     gtag('config', 'G-P8LS80EHNZ');
   </script>
-
-  <!-- Open Graph / Twitter -->
-  <meta property="og:title" content="Sun Finder — Chase the sunshine near you">
-  <meta property="og:description" content="Find the sunniest towns nearby right now, with sunshine duration and drive info.">
-  <meta property="og:type" content="website">
-  <meta name="twitter:card" content="summary_large_image">
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="style.css">
@@ -59,30 +55,24 @@
       </div>
 
       <div id="status" class="status">Ready.</div>
-
-      <!-- Top 3 Sunniest -->
       <div id="top3" class="top3"></div>
-
-      <!-- Results -->
       <div id="results" class="results"></div>
     </aside>
   </section>
 
-  <!-- How it works -->
   <div class="ob" id="onboard" aria-hidden="true">
     <div class="sheet">
       <button id="closeOb" class="close" aria-label="Close">×</button>
       <h2>How it works</h2>
       <ol>
         <li>Allow location (HTTPS required). We never store it.</li>
-        <li>Pick an interest like <b>Beach</b> or <b>Nature Reserve</b> (optional).</li>
-        <li>We find real places via OSM/Wikidata, then fetch real-time weather.</li>
-        <li>Results show <b>how long it’ll stay sunny</b> and rank by longest sunshine first.</li>
+        <li>Pick an interest (optional). We find verified places and fetch real-time weather.</li>
+        <li>Cards show <b>how long it stays sunny</b>; the list is sorted by longest sunshine first.</li>
       </ol>
     </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="script.js" defer></script>
+  <script src="script.js"></script>
 </body>
 </html>
