@@ -55,30 +55,37 @@
     return { lat, lon };
   }
 
-  manualGo && manualGo.addEventListener('click', ()=>{
-    const p = parseLatLon(manualInput.value);
+  
+  manualGo && manualGo.addEventListener('click', async ()=>{
+    const q = (manualInput && manualInput.value || '').trim();
     const statusEl = document.getElementById('status');
-    if (!p){
-      statusEl && (statusEl.textContent = "Please enter coordinates as ‘lat, lon’.");
+    if (!q){
+      statusEl && (statusEl.textContent = "Please enter a postcode or place.");
       return;
     }
-    hideManual();
-    // Kick off search using provided coordinates
-    if (typeof runSearchWithOrigin === 'function') {
-      runSearchWithOrigin(p);
-    } else if (typeof runSearch === 'function') {
-      // Fallback: if app expects to set a global origin, we can monkey-patch.
-      window.__SF_ORIGIN_OVERRIDE__ = p;
-      runSearch();
+    try{
+      statusEl && (statusEl.textContent = "Finding that location…");
+      const p = await geocodeQuery(q);
+      if(!p){ statusEl && (statusEl.textContent = "No matches. Try a more specific postcode or place."); return; }
+      hideManual();
+      if (typeof runSearchWithOrigin === 'function') {
+        runSearchWithOrigin({ lat: p.lat, lon: p.lon });
+      } else if (typeof runSearch === 'function') {
+        window.__SF_ORIGIN_OVERRIDE__ = { lat: p.lat, lon: p.lon };
+        runSearch();
+      }
+    }catch(err){
+      console.error(err);
+      statusEl && (statusEl.textContent = "Could not find that location. Try again.");
     }
   });
 
   // Patch geolocation error handling (requires runSearch to call getCurrentPosition or similar)
   window.__sfHandleGeoError = function(err){
     const statusEl = document.getElementById('status');
-    let msg = "Location unavailable. You can enter coordinates manually.";
+    let msg = "We couldn’t access your device location. Enter a postcode or place instead.";
     if (err && typeof err.code === "number") {
-      if (err.code === 1) msg = "Permission denied. Please allow location or enter coordinates manually.";
+      if (err.code === 1) msg = "Permission denied. Please allow location, or enter a postcode/place instead.";
       else if (err.code === 2) msg = "Position unavailable from your device. Enter coordinates manually.";
       else if (err.code === 3) msg = "Timed out trying to get your location. Enter coordinates manually.";
     }
@@ -87,6 +94,17 @@
   };
 
   // Keep-results-on-refresh hint
+  
+  async function geocodeQuery(q){
+    const url = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=" + encodeURIComponent(q);
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if(!res.ok) throw new Error("Geocode failed: " + res.status);
+    const data = await res.json();
+    if(!Array.isArray(data) || !data.length) return null;
+    const item = data[0];
+    return { lat: parseFloat(item.lat), lon: parseFloat(item.lon), label: item.display_name };
+  }
+
   window.__sfRefreshing = function(){
     const statusEl = document.getElementById('status');
     statusEl && (statusEl.textContent = "Refreshing results…");

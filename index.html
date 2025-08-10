@@ -107,17 +107,18 @@
   </div>
 
   <!-- Manual location fallback -->
+  
+  <!-- Manual location fallback -->
   <div id="manual-location" class="manual-location" hidden>
     <div class="manual-inner">
-      <h3>Enter a location</h3>
-      <p>Geolocation is off or unavailable. Enter coordinates like <code>55.9533, -3.1883</code> (lat, lon).</p>
+      <h3>Enter a postcode or place</h3>
+      <p>We couldn’t get your device location. Type a UK postcode (e.g., <code>EH1 3QR</code>) or a place name (e.g., <code>Edinburgh</code>).</p>
       <div class="row">
-        <input id="manual-input" type="text" inputmode="decimal" placeholder="Latitude, Longitude" aria-label="Latitude and Longitude">
-        <button id="manual-go" class="btn">Use this location</button>
+        <input id="manual-input" type="text" placeholder="Postcode or place" aria-label="Postcode or place">
+        <button id="manual-go" class="btn">Search</button>
       </div>
-      <p class="hint">Tip: Search “your city lat lon” and paste here.</p>
+      <p class="hint">We’ll geocode your input to find nearby sunny spots.</p>
     </div>
   </div>
-
 </body>
 </html>
