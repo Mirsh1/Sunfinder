@@ -45,14 +45,3 @@ body{margin:0;background:radial-gradient(1200px 600px at 20% -10%, #1b2650, #0b1
   .results{grid-template-columns:1fr 1fr}
   .top3{grid-template-columns:1fr 1fr 1fr}
 }
-
-
-/* == Sun Finder debug modal (postcode) == */
-.sf-btn{display:inline-flex;align-items:center;gap:.5rem;border:1px solid var(--border);background:var(--brand);color:#101010;
-  font-weight:700;padding:10px 14px;border-radius:12px;cursor:pointer}
-.sf-btn.ghost{background:transparent;color:var(--text)}
-.sf-modal{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.6);z-index:2000}
-.sf-modal-inner{width:min(520px,92vw);background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;display:grid;gap:10px}
-.sf-row{display:flex;gap:8px}
-#sf-postcode-input{flex:1;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
-.sf-hint{color:var(--muted);font-size:.9rem}

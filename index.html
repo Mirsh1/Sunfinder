@@ -60,7 +60,7 @@
         <button id="go" class="cta"><span>Find the Sun</span><span class="spinner" aria-hidden="true"></span></button>
       </div>
 
-      <div id="status" class="status" role="status" aria-live="polite">Ready.</div>
+      <div id="status" class="status">Ready.</div>
 
       <!-- Top 3 Sunniest -->
       <div id="top3" class="top3"></div>
@@ -89,20 +89,5 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="script.js"></script>
-
-  <!-- Postcode / place fallback -->
-  <div id="postcode-modal" class="sf-modal" hidden>
-    <div class="sf-modal-inner">
-      <h3>Use a postcode or place</h3>
-      <p>We couldn't get your location. Enter a postcode or place name and we'll search from there.</p>
-      <div class="sf-row">
-        <input id="sf-postcode-input" type="text" placeholder="e.g. EH1 3QR or Edinburgh" aria-label="Postcode or place">
-        <button id="sf-postcode-go" class="sf-btn">Use this</button>
-        <button id="sf-postcode-cancel" class="sf-btn ghost">Cancel</button>
-      </div>
-      <p id="sf-postcode-status" class="sf-hint"></p>
-    </div>
-  </div>
-
 </body>
 </html>
