@@ -1,3 +1,98 @@
+
+/* == Sun Finder v5.6.0 enhancements == */
+(function(){
+  const GA_ID = "G-P8LS80EHNZ";
+  const CONSENT_KEY = "sf_analytics_consent";
+
+  function loadGA(){
+    if (window.gtag) return;
+    const s = document.createElement("script");
+    s.async = true;
+    s.src = "https://www.googletagmanager.com/gtag/js?id=" + GA_ID;
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    window.gtag = gtag;
+    gtag('js', new Date());
+    gtag('config', GA_ID, { anonymize_ip: true });
+  }
+
+  // Consent banner
+  const banner = document.getElementById('consent-banner');
+  const acceptBtn = document.getElementById('consent-accept');
+  const declineBtn = document.getElementById('consent-decline');
+  const stored = localStorage.getItem(CONSENT_KEY);
+  if (banner && stored == null) {
+    banner.hidden = false;
+  } else if (stored === "accepted") {
+    loadGA();
+  }
+  acceptBtn && acceptBtn.addEventListener('click', ()=>{
+    localStorage.setItem(CONSENT_KEY, "accepted");
+    banner.hidden = true;
+    loadGA();
+  });
+  declineBtn && declineBtn.addEventListener('click', ()=>{
+    localStorage.setItem(CONSENT_KEY, "declined");
+    banner.hidden = true;
+  });
+
+  // Manual location modal
+  const manual = document.getElementById('manual-location');
+  const manualInput = document.getElementById('manual-input');
+  const manualGo = document.getElementById('manual-go');
+  function showManual(){ if (manual) manual.hidden = false; manualInput && manualInput.focus(); }
+  function hideManual(){ if (manual) manual.hidden = true; }
+
+  function parseLatLon(text){
+    if (!text) return null;
+    const m = text.trim().match(/^\s*([-+]?\d{1,2}\.\d+|[-+]?\d{1,2})\s*,\s*([-+]?\d{1,3}\.\d+|[-+]?\d{1,3})\s*$/);
+    if (!m) return null;
+    const lat = parseFloat(m[1]);
+    const lon = parseFloat(m[2]);
+    if (isNaN(lat) || isNaN(lon)) return null;
+    if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+    return { lat, lon };
+  }
+
+  manualGo && manualGo.addEventListener('click', ()=>{
+    const p = parseLatLon(manualInput.value);
+    const statusEl = document.getElementById('status');
+    if (!p){
+      statusEl && (statusEl.textContent = "Please enter coordinates as ‘lat, lon’.");
+      return;
+    }
+    hideManual();
+    // Kick off search using provided coordinates
+    if (typeof runSearchWithOrigin === 'function') {
+      runSearchWithOrigin(p);
+    } else if (typeof runSearch === 'function') {
+      // Fallback: if app expects to set a global origin, we can monkey-patch.
+      window.__SF_ORIGIN_OVERRIDE__ = p;
+      runSearch();
+    }
+  });
+
+  // Patch geolocation error handling (requires runSearch to call getCurrentPosition or similar)
+  window.__sfHandleGeoError = function(err){
+    const statusEl = document.getElementById('status');
+    let msg = "Location unavailable. You can enter coordinates manually.";
+    if (err && typeof err.code === "number") {
+      if (err.code === 1) msg = "Permission denied. Please allow location or enter coordinates manually.";
+      else if (err.code === 2) msg = "Position unavailable from your device. Enter coordinates manually.";
+      else if (err.code === 3) msg = "Timed out trying to get your location. Enter coordinates manually.";
+    }
+    statusEl && (statusEl.textContent = msg);
+    showManual();
+  };
+
+  // Keep-results-on-refresh hint
+  window.__sfRefreshing = function(){
+    const statusEl = document.getElementById('status');
+    statusEl && (statusEl.textContent = "Refreshing results…");
+  };
+})();
+
 // Sun Finder v5.6.0 — spinner, 60‑mile toast cap, progressive loading, activities dropdown, dedupe, no-water pins
 let map, spotsLayer, userMarker;
 const resultsEl = document.getElementById('results');
@@ -283,3 +378,21 @@ async function runSearch(){
   }
 }
 document.getElementById('go').addEventListener('click', runSearch);
+
+
+/* Public helper to run search with a provided origin {lat, lon} */
+function runSearchWithOrigin(origin){
+  try{
+    window.__sfRefreshing && window.__sfRefreshing();
+  }catch(_){}
+  if (typeof runSearch === 'function' && origin && typeof origin.lat === 'number' && typeof origin.lon === 'number'){
+    // If the app supports an override, set it
+    window.__SF_ORIGIN_OVERRIDE__ = origin;
+    runSearch();
+  }
+}
+
+/* Fallback: global error forwarder if geolocation fails elsewhere */
+function onGeolocationError(err){
+  if (window.__sfHandleGeoError) window.__sfHandleGeoError(err);
+}

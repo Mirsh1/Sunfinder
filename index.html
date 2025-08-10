@@ -5,17 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sun Finder — Find the sunniest places near you</title>
 
+  <meta name="theme-color" content="#0b1020">
+  <meta name="description" content="Sun Finder quickly locates the sunniest nearby spots using your location — perfect for last‑minute plans.">
+  <meta property="og:title" content="Sun Finder — Find the sunniest places near you">
+  <meta property="og:description" content="Find the sunniest nearby spots right now.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://www.thesunfinder.com/og.png">
+  <meta property="og:url" content="https://www.thesunfinder.com/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Sun Finder — Find the sunniest places near you">
+  <meta name="twitter:description" content="Find the sunniest nearby spots right now.">
+  <meta name="twitter:image" content="https://www.thesunfinder.com/og.png">
+
+
   <!-- AdSense verification (Auto Ads only) -->
   <meta name="google-adsense-account" content="ca-pub-2364892300509505">
-
-  <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-P8LS80EHNZ"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-P8LS80EHNZ');
-  </script>
+  <!-- Google Analytics will load after consent (see script.js) -->
 
   <!-- SEO -->
   <meta name="description" content="Find the sunniest towns near you right now. See sunshine duration, temperature and get directions.">
@@ -60,7 +65,7 @@
         <button id="go" class="cta"><span>Find the Sun</span><span class="spinner" aria-hidden="true"></span></button>
       </div>
 
-      <div id="status" class="status">Ready.</div>
+      <div id="status" class="status" role="status" aria-live="polite">Ready.</div>
 
       <!-- Top 3 Sunniest -->
       <div id="top3" class="top3"></div>
@@ -89,5 +94,30 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="script.js"></script>
+
+  <!-- Consent banner for analytics -->
+  <div id="consent-banner" class="consent-banner" hidden>
+    <div class="consent-inner">
+      <p>We use anonymous analytics to improve Sun Finder. OK to enable?</p>
+      <div class="consent-actions">
+        <button id="consent-accept" class="btn">Yes, enable</button>
+        <button id="consent-decline" class="btn ghost">No, thanks</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual location fallback -->
+  <div id="manual-location" class="manual-location" hidden>
+    <div class="manual-inner">
+      <h3>Enter a location</h3>
+      <p>Geolocation is off or unavailable. Enter coordinates like <code>55.9533, -3.1883</code> (lat, lon).</p>
+      <div class="row">
+        <input id="manual-input" type="text" inputmode="decimal" placeholder="Latitude, Longitude" aria-label="Latitude and Longitude">
+        <button id="manual-go" class="btn">Use this location</button>
+      </div>
+      <p class="hint">Tip: Search “your city lat lon” and paste here.</p>
+    </div>
+  </div>
+
 </body>
 </html>
