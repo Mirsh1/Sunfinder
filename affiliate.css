@@ -1,0 +1,9 @@
+/* Affiliate card */
+.aff-card{
+  margin-top:16px; padding:12px 14px;
+  border:1px solid #e6e6e6; border-radius:12px;
+  background:#fafafa;
+}
+.aff-title{ font-weight:600; margin-bottom:6px; }
+.aff-body a{ text-decoration:underline; }
+.aff-disclosure{ margin-top:6px; font-size:12px; color:#666; }
