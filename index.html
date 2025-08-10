@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sun Finder — Find the sunniest places near you</title>
 
   <!-- AdSense verification (Auto Ads only) -->
@@ -17,15 +17,16 @@
     gtag('config', 'G-P8LS80EHNZ');
   </script>
 
-  <!-- Open Graph / Twitter -->
-  <meta property="og:title" content="Sun Finder — Chase the sunshine near you" />
-  <meta property="og:description" content="Find the sunniest towns nearby right now, with sunshine duration and drive info." />
-  <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary_large_image" />
+  <!-- SEO -->
+  <meta name="description" content="Find the sunniest towns near you right now. See sunshine duration, temperature and get directions.">
+  <meta property="og:title" content="Sun Finder — Chase the sunshine near you">
+  <meta property="og:description" content="Real‑time sunshine finder with time‑to-sun, activities and directions.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
 
-  <link rel="icon" href="favicon.ico" sizes="any">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="topbar">
@@ -38,7 +39,7 @@
     <aside class="panel">
       <div class="controls">
         <label>Radius (miles)
-          <input type="number" id="radiusMi" value="50" min="10" max="120" step="10" />
+          <input type="number" id="radiusMi" value="40" min="10" max="60" step="5">
         </label>
         <label>Interest
           <select id="interest">
@@ -54,11 +55,9 @@
           </select>
         </label>
         <label>Max results
-          <input type="number" id="limit" value="10" min="5" max="12" step="1" />
+          <input type="number" id="limit" value="12" min="6" max="15" step="1">
         </label>
-        <button id="go" class="cta">
-          <span>Find the Sun</span><span class="spinner" aria-hidden="true"></span>
-        </button>
+        <button id="go" class="cta"><span>Find the Sun</span><span class="spinner" aria-hidden="true"></span></button>
       </div>
 
       <div id="status" class="status">Ready.</div>
@@ -79,11 +78,14 @@
       <ol>
         <li>Allow location (HTTPS required). We never store it.</li>
         <li>Pick an interest like <b>Beach</b> or <b>Nature Reserve</b> (optional).</li>
-        <li>We find verified places via Wikidata & OSM, then fetch real-time weather.</li>
-        <li>Results show <b>how long it’ll stay sunny</b> and rank by longest sunshine first.</li>
+        <li>We check real‑time weather then rank by <b>how long it’ll stay sunny</b>.</li>
+        <li>Expand a result for <b>Things to do</b> and tap to open in Maps.</li>
       </ol>
     </div>
   </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="script.js"></script>

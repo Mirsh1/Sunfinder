@@ -1,4 +1,4 @@
-/* v5.5.3 styles — dark, modern, map + results */
+/* v5.6.0 styles — dark, modern, map + results */
 :root{
   --bg:#0b1020; --panel:#0f152a; --card:#0f1428; --border:#1f2a44;
   --text:#f2f5ff; --muted:#9aa3b6; --brand:#ffd54d; --ok:#22c55e; --warn:#f59e0b;
@@ -29,14 +29,11 @@ body{margin:0;background:radial-gradient(1200px 600px at 20% -10%, #1b2650, #0b1
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .pill{border:1px solid #33416b;border-radius:999px;padding:4px 8px;font-size:12px;color:#c9d4ff}
 .ok{border-color:var(--ok)} .warn{border-color:var(--warn)}
-.toggler{margin-top:8px;border-top:1px solid #1c2746;padding-top:8px}
-.toggleBtn{background:transparent;border:1px solid #33416b;color:#c9d4ff;border-radius:10px;padding:6px 10px;cursor:pointer}
-.todo{margin-top:8px;display:none}
-.todo.show{display:block}
-.todo ul{margin:6px 0 0 16px;padding:0}
-.todo li{margin:4px 0;color:#cfe0ff}
-.todo a{color:#9ec5ff;text-decoration:none}
-.todo a:hover{text-decoration:underline}
+.toggle{margin-left:auto;background:transparent;border:1px solid #33416b;color:#c9d4ff;border-radius:10px;padding:4px 8px;cursor:pointer;font-size:12px}
+.activities{margin-top:8px;display:none}
+.activities.show{display:block}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#0d142a;border:1px solid #33416b;color:#fff;padding:10px 14px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:99999}
+.toast.show{opacity:1}
 .ob{position:fixed;inset:0;display:none;background:rgba(0,0,0,.6);z-index:9999}
 .ob.show{display:flex;align-items:center;justify-content:center}
 .sheet{background:#0d142a;border:1px solid var(--border);border-radius:16px;padding:16px;max-width:520px;width:92vw;position:relative}
