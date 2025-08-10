@@ -1,115 +1,84 @@
 
-/* == Sun Finder v5.6.0 enhancements == */
+/* == Debug helpers: log geolocation and provide postcode fallback == */
 (function(){
-  const GA_ID = "G-P8LS80EHNZ";
-  const CONSENT_KEY = "sf_analytics_consent";
+  // Expose a function to show the postcode modal
+  const modal = document.getElementById('postcode-modal');
+  const input = document.getElementById('sf-postcode-input');
+  const goBtn = document.getElementById('sf-postcode-go');
+  const cancelBtn = document.getElementById('sf-postcode-cancel');
+  const pst = document.getElementById('sf-postcode-status');
+  function setStatus(msg){ const s = document.getElementById('status'); if(s) s.textContent = msg; console.log('[SF]', msg); }
+  window.__sfShowPostcode = function(){ if(modal){ modal.hidden = false; setTimeout(()=>input && input.focus(), 0);} };
+  function hidePostcode(){ if(modal) modal.hidden = true; }
 
-  function loadGA(){
-    if (window.gtag) return;
-    const s = document.createElement("script");
-    s.async = true;
-    s.src = "https://www.googletagmanager.com/gtag/js?id=" + GA_ID;
-    document.head.appendChild(s);
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){ dataLayer.push(arguments); }
-    window.gtag = gtag;
-    gtag('js', new Date());
-    gtag('config', GA_ID, { anonymize_ip: true });
-  }
-
-  // Consent banner
-  const banner = document.getElementById('consent-banner');
-  const acceptBtn = document.getElementById('consent-accept');
-  const declineBtn = document.getElementById('consent-decline');
-  const stored = localStorage.getItem(CONSENT_KEY);
-  if (banner && stored == null) {
-    banner.hidden = false;
-  } else if (stored === "accepted") {
-    loadGA();
-  }
-  acceptBtn && acceptBtn.addEventListener('click', ()=>{
-    localStorage.setItem(CONSENT_KEY, "accepted");
-    banner.hidden = true;
-    loadGA();
-  });
-  declineBtn && declineBtn.addEventListener('click', ()=>{
-    localStorage.setItem(CONSENT_KEY, "declined");
-    banner.hidden = true;
-  });
-
-  // Manual location modal
-  const manual = document.getElementById('manual-location');
-  const manualInput = document.getElementById('manual-input');
-  const manualGo = document.getElementById('manual-go');
-  function showManual(){ if (manual) manual.hidden = false; manualInput && manualInput.focus(); }
-  function hideManual(){ if (manual) manual.hidden = true; }
-
-  function parseLatLon(text){
-    if (!text) return null;
-    const m = text.trim().match(/^\s*([-+]?\d{1,2}\.\d+|[-+]?\d{1,2})\s*,\s*([-+]?\d{1,3}\.\d+|[-+]?\d{1,3})\s*$/);
-    if (!m) return null;
-    const lat = parseFloat(m[1]);
-    const lon = parseFloat(m[2]);
-    if (isNaN(lat) || isNaN(lon)) return null;
-    if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
-    return { lat, lon };
-  }
-
-  
-  manualGo && manualGo.addEventListener('click', async ()=>{
-    const q = (manualInput && manualInput.value || '').trim();
-    const statusEl = document.getElementById('status');
-    if (!q){
-      statusEl && (statusEl.textContent = "Please enter a postcode or place.");
-      return;
-    }
+  // Simple geocode via Nominatim (postcode or place string -> {lat, lon})
+  async function geocode(q){
+    setStatus('Looking up postcode/place…');
+    pst && (pst.textContent = 'Looking up…');
     try{
-      statusEl && (statusEl.textContent = "Finding that location…");
-      const p = await geocodeQuery(q);
-      if(!p){ statusEl && (statusEl.textContent = "No matches. Try a more specific postcode or place."); return; }
-      hideManual();
+      const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(q);
+      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      if(!res.ok) throw new Error('Geocoding failed ('+res.status+')');
+      const arr = await res.json();
+      if(!arr || !arr.length) throw new Error('No match found');
+      const { lat, lon, display_name } = arr[0];
+      pst && (pst.textContent = 'Using: ' + display_name);
+      return { lat: parseFloat(lat), lon: parseFloat(lon) };
+    }catch(e){
+      pst && (pst.textContent = 'Error: ' + e.message);
+      throw e;
+    }
+  }
+
+  goBtn && goBtn.addEventListener('click', async ()=>{
+    const q = (input && input.value || '').trim();
+    if(!q){ pst && (pst.textContent='Please enter a postcode or place'); return; }
+    try{
+      const p = await geocode(q);
+      hidePostcode();
+      // Run the app search with this origin
       if (typeof runSearchWithOrigin === 'function') {
-        runSearchWithOrigin({ lat: p.lat, lon: p.lon });
+        runSearchWithOrigin(p);
       } else if (typeof runSearch === 'function') {
-        window.__SF_ORIGIN_OVERRIDE__ = { lat: p.lat, lon: p.lon };
+        window.__SF_ORIGIN_OVERRIDE__ = p;
         runSearch();
       }
-    }catch(err){
-      console.error(err);
-      statusEl && (statusEl.textContent = "Could not find that location. Try again.");
+    }catch(e){
+      setStatus('Could not use that postcode/place: ' + e.message);
     }
   });
+  cancelBtn && cancelBtn.addEventListener('click', hidePostcode);
 
-  // Patch geolocation error handling (requires runSearch to call getCurrentPosition or similar)
-  window.__sfHandleGeoError = function(err){
-    const statusEl = document.getElementById('status');
-    let msg = "We couldn’t access your device location. Enter a postcode or place instead.";
-    if (err && typeof err.code === "number") {
-      if (err.code === 1) msg = "Permission denied. Please allow location, or enter a postcode/place instead.";
-      else if (err.code === 2) msg = "Position unavailable from your device. Enter coordinates manually.";
-      else if (err.code === 3) msg = "Timed out trying to get your location. Enter coordinates manually.";
+  // Wrap geolocation to add logging and error forwarding
+  try {
+    if (navigator.geolocation && navigator.geolocation.getCurrentPosition) {
+      const _orig = navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
+      navigator.geolocation.getCurrentPosition = function(success, error, options){
+        console.log('[SF] starting geolocation', options);
+        const ok = pos => { console.log('[SF] geolocation success', pos); success && success(pos); };
+        const err = e => {
+          console.log('[SF] geolocation error', e);
+          setStatus(e && e.message ? ('Geolocation error: ' + e.message) : 'Geolocation error');
+          if (window.__sfShowPostcode) window.__sfShowPostcode();
+          error && error(e);
+        };
+        try { return _orig(ok, err, options); } catch(e){ err(e); }
+      };
     }
-    statusEl && (statusEl.textContent = msg);
-    showManual();
-  };
+  } catch(e){ console.log('[SF] geolocation wrapper failed', e); }
 
-  // Keep-results-on-refresh hint
-  
-  async function geocodeQuery(q){
-    const url = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=" + encodeURIComponent(q);
-    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-    if(!res.ok) throw new Error("Geocode failed: " + res.status);
-    const data = await res.json();
-    if(!Array.isArray(data) || !data.length) return null;
-    const item = data[0];
-    return { lat: parseFloat(item.lat), lon: parseFloat(item.lon), label: item.display_name };
-  }
-
-  window.__sfRefreshing = function(){
-    const statusEl = document.getElementById('status');
-    statusEl && (statusEl.textContent = "Refreshing results…");
-  };
+  // Provide helper so callers can show "refreshing" without clearing results
+  window.__sfRefreshing = function(){ setStatus('Refreshing results…'); };
 })();
+
+/* Public helper to run search with a provided origin {lat, lon} */
+function runSearchWithOrigin(origin){
+  try{ window.__sfRefreshing && window.__sfRefreshing(); }catch(_){}
+  if (typeof runSearch === 'function' && origin && typeof origin.lat === 'number' && typeof origin.lon === 'number'){
+    window.__SF_ORIGIN_OVERRIDE__ = origin;
+    runSearch();
+  }
+}
 
 // Sun Finder v5.6.0 — spinner, 60‑mile toast cap, progressive loading, activities dropdown, dedupe, no-water pins
 let map, spotsLayer, userMarker;
@@ -396,21 +365,3 @@ async function runSearch(){
   }
 }
 document.getElementById('go').addEventListener('click', runSearch);
-
-
-/* Public helper to run search with a provided origin {lat, lon} */
-function runSearchWithOrigin(origin){
-  try{
-    window.__sfRefreshing && window.__sfRefreshing();
-  }catch(_){}
-  if (typeof runSearch === 'function' && origin && typeof origin.lat === 'number' && typeof origin.lon === 'number'){
-    // If the app supports an override, set it
-    window.__SF_ORIGIN_OVERRIDE__ = origin;
-    runSearch();
-  }
-}
-
-/* Fallback: global error forwarder if geolocation fails elsewhere */
-function onGeolocationError(err){
-  if (window.__sfHandleGeoError) window.__sfHandleGeoError(err);
-}

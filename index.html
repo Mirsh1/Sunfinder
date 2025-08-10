@@ -5,22 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sun Finder — Find the sunniest places near you</title>
 
-  <meta name="theme-color" content="#0b1020">
-  <meta name="description" content="Sun Finder quickly locates the sunniest nearby spots using your location — perfect for last‑minute plans.">
-  <meta property="og:title" content="Sun Finder — Find the sunniest places near you">
-  <meta property="og:description" content="Find the sunniest nearby spots right now.">
-  <meta property="og:type" content="website">
-  <meta property="og:image" content="https://www.thesunfinder.com/og.png">
-  <meta property="og:url" content="https://www.thesunfinder.com/">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Sun Finder — Find the sunniest places near you">
-  <meta name="twitter:description" content="Find the sunniest nearby spots right now.">
-  <meta name="twitter:image" content="https://www.thesunfinder.com/og.png">
-
-
   <!-- AdSense verification (Auto Ads only) -->
   <meta name="google-adsense-account" content="ca-pub-2364892300509505">
-  <!-- Google Analytics will load after consent (see script.js) -->
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-P8LS80EHNZ"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-P8LS80EHNZ');
+  </script>
 
   <!-- SEO -->
   <meta name="description" content="Find the sunniest towns near you right now. See sunshine duration, temperature and get directions.">
@@ -95,30 +90,19 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="script.js"></script>
 
-  <!-- Consent banner for analytics -->
-  <div id="consent-banner" class="consent-banner" hidden>
-    <div class="consent-inner">
-      <p>We use anonymous analytics to improve Sun Finder. OK to enable?</p>
-      <div class="consent-actions">
-        <button id="consent-accept" class="btn">Yes, enable</button>
-        <button id="consent-decline" class="btn ghost">No, thanks</button>
+  <!-- Postcode / place fallback -->
+  <div id="postcode-modal" class="sf-modal" hidden>
+    <div class="sf-modal-inner">
+      <h3>Use a postcode or place</h3>
+      <p>We couldn't get your location. Enter a postcode or place name and we'll search from there.</p>
+      <div class="sf-row">
+        <input id="sf-postcode-input" type="text" placeholder="e.g. EH1 3QR or Edinburgh" aria-label="Postcode or place">
+        <button id="sf-postcode-go" class="sf-btn">Use this</button>
+        <button id="sf-postcode-cancel" class="sf-btn ghost">Cancel</button>
       </div>
+      <p id="sf-postcode-status" class="sf-hint"></p>
     </div>
   </div>
 
-  <!-- Manual location fallback -->
-  
-  <!-- Manual location fallback -->
-  <div id="manual-location" class="manual-location" hidden>
-    <div class="manual-inner">
-      <h3>Enter a postcode or place</h3>
-      <p>We couldn’t get your device location. Type a UK postcode (e.g., <code>EH1 3QR</code>) or a place name (e.g., <code>Edinburgh</code>).</p>
-      <div class="row">
-        <input id="manual-input" type="text" placeholder="Postcode or place" aria-label="Postcode or place">
-        <button id="manual-go" class="btn">Search</button>
-      </div>
-      <p class="hint">We’ll geocode your input to find nearby sunny spots.</p>
-    </div>
-  </div>
 </body>
 </html>
